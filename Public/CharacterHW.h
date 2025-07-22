@@ -62,8 +62,14 @@ protected:
 	void UpdateOverheadHP();
 
 private:
-	float NormalSpeed;
-	float SprintSpeedMultiplier;
-	float SprintSpeed;
+   float NormalSpeed;
+   float SprintSpeedMultiplier;
+   float SprintSpeed;
+
+   FTimerHandle LowSpeedDebuffTimerHandle;
+   float LowSpeedDebuffRemaining = 0.f;
+
+public:
+   void ApplyLowSpeedDebuff(float Duration);
 
 };

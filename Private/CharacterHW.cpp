@@ -8,6 +8,9 @@
 #include "GameStateHW.h"
 #include <Components/TextBlock.h>
 
+#include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
+
 ACharacterHW::ACharacterHW()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -207,4 +210,69 @@ void ACharacterHW::UpdateOverheadHP()
 	{
 		HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %0.f"), Health, MaxHealth)));
 	}
+}
+
+void ACharacterHW::ApplyLowSpeedDebuff(float Duration)
+{
+	// 누적 지속시간 관리
+	LowSpeedDebuffRemaining += Duration;
+
+	// 속도 감소 적용
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = NormalSpeed * 0.5f; // 50% 속도 감소
+	}
+
+	// Debuff 텍스트 표시
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC)
+	{
+		UUserWidget* HUDWidget = nullptr;
+		if (PC->IsA(APlayerControllerHW::StaticClass()))
+		{
+			HUDWidget = Cast<APlayerControllerHW>(PC)->GetHUDWidget();
+		}
+		if (HUDWidget)
+		{
+			if (UTextBlock* DebuffText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Debuff"))))
+			{
+				DebuffText->SetText(FText::FromString(TEXT("Debuff: Low Speed")));
+				DebuffText->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+	}
+
+	// 타이머 갱신
+	GetWorldTimerManager().ClearTimer(LowSpeedDebuffTimerHandle);
+	GetWorldTimerManager().SetTimer(
+		LowSpeedDebuffTimerHandle,
+		[this]()
+		{
+			LowSpeedDebuffRemaining = 0.f;
+			// 속도 복구
+			if (GetCharacterMovement())
+			{
+				GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+			}
+			// Debuff 텍스트 숨김
+			APlayerController* PC2 = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			if (PC2)
+			{
+				UUserWidget* HUDWidget2 = nullptr;
+				if (PC2->IsA(APlayerControllerHW::StaticClass()))
+				{
+					HUDWidget2 = Cast<APlayerControllerHW>(PC2)->GetHUDWidget();
+				}
+				if (HUDWidget2)
+				{
+					if (UTextBlock* DebuffText2 = Cast<UTextBlock>(HUDWidget2->GetWidgetFromName(TEXT("Debuff"))))
+					{
+						DebuffText2->SetVisibility(ESlateVisibility::Hidden);
+					}
+				}
+			}
+		},
+		LowSpeedDebuffRemaining,
+		false
+	);
 }
