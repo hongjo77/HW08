@@ -13,6 +13,7 @@ class HW08_API ASpawnActor : public AActor
 
 public:
     ASpawnActor();
+    void SpawnWave(int32 NumMoving, int32 NumRotating); // [public으로 이동]
 
 protected:
     virtual void BeginPlay() override;
@@ -46,4 +47,5 @@ protected:
 
     UFUNCTION()
     void OnActorDestroyed(AActor* DestroyedActor);
+    
 };

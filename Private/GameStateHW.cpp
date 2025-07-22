@@ -7,6 +7,9 @@
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 #include "CharacterHW.h"
+#include "MovingActor.h"
+#include "RotatingActor.h"
+#include "SpawnActor.h"
 
 AGameStateHW::AGameStateHW()
 {
@@ -121,11 +124,66 @@ void AGameStateHW::StartLevel()
 		LevelDuration,
 		false
 	);
+
+	CurrentWaveIndex = 0;
+    StartWave(); 
+}
+
+void AGameStateHW::StartWave()
+{
+    TArray<AActor*> FoundActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMovingActor::StaticClass(), FoundActors);
+    for (AActor* Actor : FoundActors) Actor->Destroy();
+    FoundActors.Empty();
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ARotatingActor::StaticClass(), FoundActors);
+    for (AActor* Actor : FoundActors) Actor->Destroy();
+
+    int32 NumMoving = 3 + CurrentWaveIndex * 2;
+    int32 NumRotating = 3 + CurrentWaveIndex * 2;
+
+    TArray<AActor*> SpawnActors;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnActor::StaticClass(), SpawnActors);
+    for (AActor* Actor : SpawnActors)
+    {
+        if (ASpawnActor* Spawner = Cast<ASpawnActor>(Actor))
+        {
+            Spawner->SpawnWave(NumMoving, NumRotating);
+        }
+    }
+
+    GetWorldTimerManager().SetTimer(
+        WaveTimerHandle,
+        this,
+        &AGameStateHW::OnWaveTimeUp,
+        WaveDuration,
+        false
+    );
+}
+
+void AGameStateHW::OnWaveTimeUp()
+{
+    CurrentWaveIndex++;
+    if (CurrentWaveIndex < MaxWaves)
+    {
+        StartWave();
+    }
+    else
+    {
+        EndLevel();
+    }
 }
 
 void AGameStateHW::OnLevelTimeUp()
 {
-	EndLevel();
+	CurrentWaveIndex++;
+    if (CurrentWaveIndex < MaxWaves)
+    {
+        StartWave();
+    }
+    else
+    {
+        EndLevel();
+    }
 }
 
 void AGameStateHW::EndLevel()
@@ -172,7 +230,8 @@ void AGameStateHW::UpdateHUD()
 			{
 				if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
 				{
-					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+					//float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(WaveTimerHandle);
 					TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), RemainingTime)));
 				}
 
@@ -190,7 +249,12 @@ void AGameStateHW::UpdateHUD()
 
 				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
 				{
-					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Wave: %d"), CurrentLevelIndex + 1)));
+					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+				}
+
+				if (UTextBlock* WaveText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Wave"))))
+				{
+					WaveText->SetText(FText::FromString(FString::Printf(TEXT("Wave: %d"), CurrentWaveIndex + 1)));
 				}
 
 				UUserWidget* WBP_HP_Widget = Cast<UUserWidget>(HUDWidget->GetWidgetFromName(TEXT("WBP_HP")));

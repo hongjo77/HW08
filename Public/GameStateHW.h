@@ -32,6 +32,11 @@ public:
 	FTimerHandle LevelTimerHandle;
 	FTimerHandle HUDUpdateTimerHandle;
 
+	int32 CurrentWaveIndex = 0;
+	int32 MaxWaves = 3;
+	float WaveDuration = 10.0f;
+	FTimerHandle WaveTimerHandle;
+
 	UFUNCTION(BlueprintPure, Category = "Score")
 	int32 GetScore() const;
 	UFUNCTION(BlueprintCallable, Category = "Score")
@@ -44,4 +49,6 @@ public:
 	void OnCoinCollected();
 	void EndLevel();
 	void UpdateHUD();
+	void StartWave();
+	void OnWaveTimeUp(); 
 };

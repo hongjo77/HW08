@@ -86,3 +86,9 @@ void ASpawnActor::OnActorDestroyed(AActor* DestroyedActor)
         );
     }
 }
+
+void ASpawnActor::SpawnWave(int32 NumMoving, int32 NumRotating)
+{
+    for (int32 i = 0; i < NumMoving; ++i) SpawnOneMovingActor();
+    for (int32 i = 0; i < NumRotating; ++i) SpawnOneRotatingActor();
+}
