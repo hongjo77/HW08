@@ -79,13 +79,14 @@ void AMineItem::Explode()
 
 	if (Particle)
 	{
-		FTimerHandle DestroyParticleTimerHandle;
-
 		GetWorld()->GetTimerManager().SetTimer(
 			DestroyParticleTimerHandle,
 			[Particle]()
 			{
-				Particle->DestroyComponent();
+				if (IsValid(Particle))
+				{
+					Particle->DestroyComponent();
+				}
 			},
 			2.0f,
 			false

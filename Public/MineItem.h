@@ -29,6 +29,7 @@ public:
 	bool bHasExploded;
 
 	FTimerHandle ExplosionTimeHandle;
+	FTimerHandle DestroyParticleTimerHandle;
 
 	virtual void ActivateItem(AActor* Activator) override;
 

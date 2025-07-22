@@ -5,6 +5,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "MiniMapWidget.h"
 
 APlayerControllerHW::APlayerControllerHW()
 	: InputmappingContext(nullptr),
@@ -17,6 +18,17 @@ APlayerControllerHW::APlayerControllerHW()
 	MainMenuWidgetClass(nullptr),
 	MainMenuWidgetInstance(nullptr)
 {
+	PrimaryActorTick.bCanEverTick = true;
+}
+
+void APlayerControllerHW::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (MiniMapWidget && GetPawn())
+	{
+		MiniMapWidget->UpdateMiniMap(GetPawn()->GetActorLocation(), GetPawn()->GetActorRotation().Yaw);
+	}
 
 }
 
@@ -50,6 +62,19 @@ void APlayerControllerHW::ShowGameHUD()
 		if (SpartaGameState)
 		{
 			SpartaGameState->UpdateHUD();
+		}
+	}
+	if (MiniMapWidgetClass)
+	{
+		MiniMapWidget = Cast<UMiniMapWidget>(CreateWidget<UUserWidget>(this, MiniMapWidgetClass));
+		if (MiniMapWidget)
+		{
+			MiniMapWidget->AddToViewport();
+			// 레벨 인덱스 할당
+			if (UGameInstanceHW* GI = Cast<UGameInstanceHW>(UGameplayStatics::GetGameInstance(this)))
+			{
+				MiniMapWidget->SetCurrentLevelIndex(GI->CurrentLevelIndex);
+			}
 		}
 	}
 }
@@ -109,6 +134,16 @@ void APlayerControllerHW::ShowMainMenu(bool bIsRestart)
 
 void APlayerControllerHW::StartGame()
 {
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+	if (MainMenuWidgetInstance)
+	{
+		MainMenuWidgetInstance->RemoveFromParent();
+		MainMenuWidgetInstance = nullptr;
+	}
 	if (UGameInstanceHW* SpartaGameInstance = Cast<UGameInstanceHW>(UGameplayStatics::GetGameInstance(this)))
 	{
 		SpartaGameInstance->CurrentLevelIndex = 0;

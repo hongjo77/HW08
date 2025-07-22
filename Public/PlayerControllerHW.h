@@ -39,6 +39,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	UUserWidget* GetHUDWidget() const;
 
+	UPROPERTY()
+	class UMiniMapWidget* MiniMapWidget; // MiniMap BP를 부모로 한 위젯
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> MiniMapWidgetClass;
+
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void ShowGameHUD();
 	UFUNCTION(BlueprintCallable, Category = "Menu")
@@ -48,4 +53,5 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 };

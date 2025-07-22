@@ -36,6 +36,10 @@ protected:
 	virtual FName GetItemType() const override;
 
 	virtual void DestroyItem();
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	TWeakObjectPtr<UParticleSystemComponent> WeakParticle;
+	FTimerHandle DestroyParticleTimerHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FName ItemType;

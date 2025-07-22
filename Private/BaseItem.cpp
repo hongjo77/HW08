@@ -67,13 +67,15 @@ void ABaseItem::ActivateItem(AActor* Activator)
 
 	if (Particle)
 	{
-		FTimerHandle DestroyParticleTimerHandle;
-
+		WeakParticle = Particle;
 		GetWorld()->GetTimerManager().SetTimer(
 			DestroyParticleTimerHandle,
-			[Particle]()
+			[this]()
 			{
-				Particle->DestroyComponent();
+				if (WeakParticle.IsValid())
+				{
+					WeakParticle.Get()->DestroyComponent();
+				}
 			},
 			2.0f,
 			false
@@ -92,3 +94,11 @@ void ABaseItem::DestroyItem()
 	Destroy();
 }
 
+void ABaseItem::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+	}
+}

@@ -6,6 +6,7 @@
 #include "CoinItem.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
+#include "CharacterHW.h"
 
 AGameStateHW::AGameStateHW()
 {
@@ -14,7 +15,7 @@ AGameStateHW::AGameStateHW()
 	CollectedCoinCount = 0;
 	LevelDuration = 30.0f;
 	CurrentLevelIndex = 0;
-	MaxLevels = 1;
+	MaxLevels = 3;
 }
 
 void AGameStateHW::BeginPlay()
@@ -23,6 +24,7 @@ void AGameStateHW::BeginPlay()
 
 	StartLevel();
 
+	GetWorldTimerManager().ClearTimer(HUDUpdateTimerHandle);
 	GetWorldTimerManager().SetTimer(
 		HUDUpdateTimerHandle,
 		this,
@@ -128,6 +130,10 @@ void AGameStateHW::OnLevelTimeUp()
 
 void AGameStateHW::EndLevel()
 {
+	// 1. HUD 타이머 먼저 꺼준다 (최상단 추가!)
+	GetWorldTimerManager().ClearTimer(HUDUpdateTimerHandle);
+
+	// 기존 코드 (레벨 타이머 해제)
 	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
 
 	if (UGameInstance* GameInstance = GetGameInstance())
@@ -154,6 +160,7 @@ void AGameStateHW::EndLevel()
 		OnGameOver();
 	}
 }
+
 
 void AGameStateHW::UpdateHUD()
 {
@@ -183,9 +190,26 @@ void AGameStateHW::UpdateHUD()
 
 				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
 				{
-					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Wave: %d"), CurrentLevelIndex + 1)));
+				}
+
+				UUserWidget* WBP_HP_Widget = Cast<UUserWidget>(HUDWidget->GetWidgetFromName(TEXT("WBP_HP")));
+				if (WBP_HP_Widget)
+				{
+					UTextBlock* HPText = Cast<UTextBlock>(WBP_HP_Widget->GetWidgetFromName(TEXT("OverHeadHp")));
+					if (HPText)
+					{
+						APawn* Pawn = PlayerController->GetPawn();
+						if (ACharacterHW* Character = Cast<ACharacterHW>(Pawn))
+						{
+							int32 HP = Character->GetHealth();
+							HPText->SetText(FText::FromString(FString::Printf(TEXT("HP : %d / 100"), HP)));
+						}
+					}
 				}
 			}
 		}
 	}
 }
+
+
